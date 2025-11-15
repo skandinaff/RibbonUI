@@ -100,25 +100,33 @@ endif()
 # Define the RibbonUI library
 qt_add_library(${PROJECT_NAME} ${LIB_TYPE})
 
-# Add i18n files
-set_source_files_properties(${ts_files} PROPERTIES OUTPUT_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/i18n)
+option(RIBBONUI_UPDATE_TRANSLATIONS "Run lupdate/lrelease over RibbonUI .ts sources" OFF)
+set(r_qm_files)
 
-if(QT_VERSION VERSION_LESS 6.0)
-    qt5_create_translation_plus(qm_files ${CMAKE_CURRENT_SOURCE_DIR} ${ts_files})
+if(RIBBONUI_UPDATE_TRANSLATIONS)
+    set_source_files_properties(${ts_files} PROPERTIES OUTPUT_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/i18n)
+    if(QT_VERSION VERSION_LESS 6.0)
+        qt5_create_translation_plus(qm_files ${CMAKE_CURRENT_SOURCE_DIR} ${ts_files})
+    else()
+        qt6_create_translation(qm_files ${CMAKE_CURRENT_SOURCE_DIR} ${ts_files})
+    endif()
     foreach(qm_file ${qm_files})
         string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}/" "" r_qm_file ${qm_file})
         list(APPEND r_qm_files ${r_qm_file})
     endforeach()
+else()
+    foreach(ts_file ${ts_files})
+        string(REPLACE ".ts" ".qm" qm_file ${ts_file})
+        list(APPEND r_qm_files ${qm_file})
+    endforeach()
+endif()
+
+if(QT_VERSION VERSION_LESS 6.0)
     qt5_add_resources_plus(${PROJECT_NAME} "${PROJECT_NAME}-translations"
         PREFIX "/"
         FILES ${r_qm_files}
     )
 else()
-    qt6_create_translation(qm_files ${CMAKE_CURRENT_SOURCE_DIR} ${ts_files})
-    foreach(qm_file ${qm_files})
-        string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}/" "" r_qm_file ${qm_file})
-        list(APPEND r_qm_files ${r_qm_file})
-    endforeach()
     qt6_add_resources(${PROJECT_NAME} "${PROJECT_NAME}-translations"
         PREFIX "/"
         FILES ${r_qm_files}
